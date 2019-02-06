@@ -69,7 +69,7 @@ void drawstuff(cairo_t * cr) {
     while (true) {
         // clear screen
         cairo_rectangle(cr, -1, -1, 2, 2);
-        cairo_set_source_rgb(cr, .5, 1, .5);
+        cairo_set_source_rgb(cr, 0.5, 1, 0.5);
         cairo_fill(cr);
 
 	cairo_save(cr);
@@ -82,7 +82,16 @@ void drawstuff(cairo_t * cr) {
 	cairo_set_source_rgb(cr, 0,1,0);
 	cairo_fill_preserve(cr);
 	cairo_set_line_width(cr, 0.01);
-	cairo_set_source_rgb(cr, 0,0,.5);
+	cairo_set_source_rgb(cr, 0,0,0.5);
+	cairo_stroke(cr);
+	cairo_new_sub_path(cr);
+	cairo_arc(cr, -0.05, 0.05, 0.025, 0, 2*M_PI);
+	cairo_new_sub_path(cr);
+	cairo_arc(cr, 0.05, 0.05, 0.025, 0, 2*M_PI);
+	cairo_set_source_rgb(cr, 0.5,0.5,1);
+	cairo_fill_preserve(cr);
+	cairo_set_line_width(cr, 0.01);
+	cairo_set_source_rgb(cr, 0,0,0.5);
 	cairo_stroke(cr);
 
 	// axe
