@@ -58,174 +58,53 @@ cpSpace * space;
 
 int BLIT_READY;
 
+double mouse_angle = 0.0;
+bool mouse_down = false;
+
 void drawstuff(cairo_t * cr) {
     // 0,0 at center of window and 1,1 at top right
     cairo_scale(cr, SCREEN_WIDTH/2.0, -SCREEN_HEIGHT/2.0);
     cairo_translate(cr, 1, -1);
 
-    // set up physics
-    cpVect gravity = cpv(0, -1);
-    space = cpSpaceNew();
-    cpSpaceSetGravity(space, gravity);
-
-    // walls
-    //TODO simplify this
-    /*
-    cpShape * ceiling = cpSegmentShapeNew(cpSpaceGetStaticBody(space),
-                                          cpv(-1,1), cpv(1, 1), 0);
-    cpShapeSetFriction(ceiling, 0);
-    cpSpaceAddShape(space, ceiling);
-    cpShape * leftwall = cpSegmentShapeNew(cpSpaceGetStaticBody(space),
-                                           cpv(-1,-1), cpv(-1, 1), 0);
-    cpShapeSetFriction(leftwall, 0);
-    cpSpaceAddShape(space, leftwall);
-    cpShape * rightwall = cpSegmentShapeNew(cpSpaceGetStaticBody(space),
-                                           cpv(1,-1), cpv(1, 1), 0);
-    cpShapeSetFriction(rightwall, 0);
-    cpSpaceAddShape(space, rightwall);
-    cpShape * floor = cpSegmentShapeNew(cpSpaceGetStaticBody(space),
-                                        cpv(-1,-1), cpv(1, -1), 0);
-    cpShapeSetFriction(floor, 0);
-    cpSpaceAddShape(space, floor);
-    */
-
-    // static body
-    cpBody * body0 = cpSpaceAddBody(space, cpBodyNewStatic());
-    cpBodySetPosition(body0, cpv(0, 1));
-
-    // set font
-    cairo_select_font_face(cr, "Georgia", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(cr, 0.2);
-    cpFloat pad = 0.02;
-
-    // "Hello,"
-    cairo_text_extents_t te1;
-    cairo_text_extents(cr, "Hello,", & te1);
-    cpFloat mass1 = 1;
-    cpFloat moment1 = cpMomentForBox(mass1, te1.width, te1.height);
-    cpBody * body1 = cpSpaceAddBody(space, cpBodyNew(mass1, moment1/2));
-    //cpShape * shape1 = cpSpaceAddShape(space, cpBoxShapeNew(body1, te1.width, te1.height, 0.001));
-    //cpShapeSetElasticity(shape1, 0.999999);
-    cpBodySetPosition(body1, cpv(0.5, 0.75));
-    //cpShapeSetFriction(shape1, 0.0);
-
-    /*
-    vector<cpVect> dots = {cpv(0.25-te1.width/2,0.25-te1.height/2),
-                           cpv(0.25-te1.width/2,0.25+te1.height/2),
-                           cpv(0.25+te1.width/2,0.25+te1.height/2),
-                           cpv(0.25+te1.width/2,0.25-te1.height/2)};
-    */
-
-    // "World!"
-    cairo_text_extents_t te2;
-    cairo_text_extents(cr, "World!", & te2);
-    cpFloat mass2 = 1;
-    cpFloat moment2 = cpMomentForBox(mass2, te2.width, te2.height);
-    cpBody * body2 = cpSpaceAddBody(space, cpBodyNew(mass2, moment2/2));
-    //cpShape * shape2 = cpSpaceAddShape(space, cpBoxShapeNew(body2, te2.width, te2.height, 0.001));
-    //cpShapeSetElasticity(shape2, 0.999999);
-    cpBodySetPosition(body2, cpv(0.5, 0.333));
-    //cpShapeSetFriction(shape2, 0.0);
-
-    // springs
-    cpSpaceAddConstraint(space, cpDampedSpringNew(body0, body1, cpv(0,0), cpv(0,0.01), 0.667, 30, 0.0001));
-    cpSpaceAddConstraint(space, cpDampedSpringNew(body1, body2, cpv(0,-0.01), cpv(0,0.01), 0.667, 30, 0.0001));
-
     while (true) {
-        for (int n=0 ; n<20 ; n+=1) cpSpaceStep(space, 1/1000.0);
-        //cpSpaceStep(space, 20 / 1000.0);
-
         // clear screen
         cairo_rectangle(cr, -1, -1, 2, 2);
-        cairo_set_source_rgb(cr, 1, 1, 1);
+        cairo_set_source_rgb(cr, .5, 1, .5);
         cairo_fill(cr);
 
-        // Hello,
-        cpVect pos1 = cpBodyGetPosition(body1);
-        cpFloat rot1 = cpBodyGetAngle(body1);
+	cairo_save(cr);
 
-        cairo_save(cr);
+	cairo_rotate(cr, mouse_angle);
 
-        cairo_move_to(cr, pos1.x, pos1.y);
-        cairo_scale(cr, 1, -1);
-        cairo_rotate(cr, rot1);
-        cairo_rel_move_to(cr, -te1.width/2, te1.height/2);
-        cairo_text_path(cr, "Hello,");
-        cairo_set_source_rgb(cr, 0,0,1);
-        cairo_fill_preserve(cr);
-        cairo_set_line_width(cr, 0.001);
-        cairo_set_source_rgb(cr, 0,0,0);
-        cairo_stroke(cr);
+	// guy
+	cairo_new_sub_path(cr);
+	cairo_arc(cr, 0, 0, 0.1, 0, 2*M_PI);
+	cairo_set_source_rgb(cr, 0,1,0);
+	cairo_fill_preserve(cr);
+	cairo_set_line_width(cr, 0.01);
+	cairo_set_source_rgb(cr, 0,0,.5);
+	cairo_stroke(cr);
 
-        cairo_restore(cr);
+	// axe
+	cairo_save(cr);
+	if (mouse_down) cairo_rotate(cr, M_PI/4);
 
-        /*
-        // Hello box
-        cairo_save(cr);
+	cairo_move_to(cr, 0.1, 0);
+	cairo_line_to(cr, 0.25, 0.15);
+	cairo_set_line_width(cr, 0.02);
+	cairo_set_source_rgb(cr, 150.0/255.0, 83.0/255.0, 83.0/255.0);
+	cairo_stroke(cr);
+	cairo_new_sub_path(cr);
+	cairo_arc(cr, 0.25, 0.15, 0.1, M_PI/4, M_PI+M_PI/4);
+	cairo_set_source_rgb(cr, 246.0/255.0, 187.0/255.0, 66.0/255.0);
+	cairo_fill_preserve(cr);
+	cairo_set_line_width(cr, 0.02);
+	cairo_set_source_rgb(cr, 248.0/255.0, 200.0/255.0, 104.0/255.0);
+	cairo_stroke(cr);
 
-        cairo_move_to(cr, pos1.x, pos1.y);
-        cairo_scale(cr, 1, -1);
-        cairo_rotate(cr, rot1);
-        cairo_rel_move_to(cr, -te1.width/2+te1.x_bearing, te1.height/2+te1.y_bearing);
-        cairo_rel_move_to(cr, -pad, -pad);
-        cairo_rel_line_to(cr, te1.width+2*pad, 0);
-        cairo_rel_line_to(cr, 0, te1.height+2*pad);
-        cairo_rel_line_to(cr, -te1.width-2*pad, 0);
-        cairo_close_path(cr);
-        cairo_set_line_width(cr, 0.001);
-        cairo_set_source_rgb(cr, 0,0,0);
-        cairo_stroke(cr);
+	cairo_restore(cr);
 
-        cairo_restore(cr);
-        */
-
-        // World!
-        cpVect pos2 = cpBodyGetPosition(body2);
-        cpFloat rot2 = cpBodyGetAngle(body2);
-
-        cairo_save(cr);
-
-        cairo_move_to(cr, pos2.x, pos2.y);
-        cairo_scale(cr, 1, -1);
-        cairo_rotate(cr, rot2);
-        cairo_rel_move_to(cr, -te2.width/2, te2.height/2);
-        cairo_text_path(cr, "World!");
-        cairo_set_source_rgb(cr, 0,1,0);
-        cairo_fill_preserve(cr);
-        cairo_set_line_width(cr, 0.001);
-        cairo_set_source_rgb(cr, 0,0,0);
-        cairo_stroke(cr);
-
-        cairo_restore(cr);
-
-        /*
-        // World box
-        cairo_save(cr);
-
-        cairo_move_to(cr, pos2.x, pos2.y);
-        cairo_scale(cr, 1, -1);
-        cairo_rotate(cr, rot2);
-        cairo_rel_move_to(cr, -te2.width/2+te2.x_bearing, te2.height/2+te2.y_bearing);
-        cairo_rel_move_to(cr, -pad, -pad);
-        cairo_rel_line_to(cr, te2.width+2*pad, 0);
-        cairo_rel_line_to(cr, 0, te2.height+2*pad);
-        cairo_rel_line_to(cr, -te2.width-2*pad, 0);
-        cairo_close_path(cr);
-        cairo_set_line_width(cr, 0.001);
-        cairo_set_source_rgb(cr, 0,0,0);
-        cairo_stroke(cr);
-
-        cairo_restore(cr);
-        */
-
-        /*
-        for (cpVect dot : dots) {
-            cairo_new_sub_path(cr);
-            cairo_arc(cr, dot.x, dot.y, 0.01, 0, 2*M_PI);
-        }
-        cairo_set_source_rgb(cr, 1,0,0);
-        cairo_fill(cr);
-        */
+	cairo_restore(cr);
 
         SDL_Event e;
         e.type = BLIT_READY;
@@ -273,6 +152,19 @@ int main(int nargs, char * args[])
             SDL_BlitSurface(sdlsurf, NULL, wsurf, NULL);
             SDL_UpdateWindowSurface(gWindow);
         }
+	else if (e.type == SDL_MOUSEMOTION) {
+            double x = e.motion.x;
+            double y = e.motion.y;
+            cairo_device_to_user(cr, & x, & y);
+
+            mouse_angle = cpvtoangle(cpv(x,y)) - M_PI/2;
+	}
+	else if (e.type == SDL_MOUSEBUTTONDOWN) {
+	    mouse_down = true;
+	}
+	else if (e.type == SDL_MOUSEBUTTONUP) {
+	    mouse_down = false;
+	}
     }
 
     drawthread.detach();
